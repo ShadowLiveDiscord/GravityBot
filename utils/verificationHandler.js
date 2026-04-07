@@ -30,14 +30,10 @@ async function startVerification(interaction, client) {
     if (Date.now() > data.expiresAt) pendingVerifications.delete(t);
   }
 
-  // Si le site est hébergé sur GitHub Pages, on passe l'URL de l'API en paramètre
-  const apiUrl = process.env.API_URL || process.env.WEB_URL || 'http://localhost:3000';
-  const siteUrl = process.env.SITE_URL || process.env.WEB_URL || 'http://localhost:3000';
-  const isGithubPages = siteUrl.includes('github.io');
-  const verifyPath = isGithubPages ? '' : '/verify';
-  const verifyUrl = isGithubPages
-    ? `${siteUrl}${verifyPath}?token=${token}&api=${encodeURIComponent(apiUrl)}`
-    : `${siteUrl}${verifyPath}?token=${token}`;
+  // Le lien pointe vers le site GitHub Pages avec le token ET l'URL de l'API en paramètre
+  const apiUrl = process.env.API_URL || 'http://localhost:3000';
+  const siteUrl = process.env.SITE_URL || 'http://localhost:3000';
+  const verifyUrl = `${siteUrl}?token=${token}&api=${encodeURIComponent(apiUrl)}`;
 
   // Envoyer le lien en MP
   try {

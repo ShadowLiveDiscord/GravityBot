@@ -5,6 +5,23 @@ const { getPendingVerifications } = require('../utils/verificationHandler');
 const app = express();
 const PORT = process.env.WEB_PORT || 3000;
 
+// CORS : autoriser les appels depuis GitHub Pages et localhost
+app.use((req, res, next) => {
+  const allowed = [
+    'https://shadowlivediscord.github.io',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+  ];
+  const origin = req.headers.origin;
+  if (origin && allowed.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
