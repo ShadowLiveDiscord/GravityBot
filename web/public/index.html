@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vérification — Gravity Voice</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d1a;
+      --card: #13132a;
+      --card2: #1a1a35;
+      --border: #2a2a4a;
+      --accent: #5865F2;
+      --accent-hover: #4752c4;
+      --success: #57F287;
+      --error: #ED4245;
+      --warning: #FEE75C;
+      --text: #e2e2f0;
+      --muted: #8888aa;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(88,101,242,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(87,242,135,0.08) 0%, transparent 50%);
+    }
+
+    /* Étoiles */
+    .stars { position: fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; overflow:hidden; }
+    .star { position:absolute; border-radius:50%; background:white; animation: twinkle var(--d,3s) infinite ease-in-out; opacity:0; }
+    @keyframes twinkle { 0%,100%{opacity:0} 50%{opacity:var(--o,0.6)} }
+
+    .container { position:relative; z-index:1; width:100%; max-width:460px; }
+
+    /* Logo */
+    .logo-area { text-align:center; margin-bottom:2rem; }
+    .planet { font-size:3.5rem; display:block; margin-bottom:0.5rem; animation:float 4s ease-in-out infinite; }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    .logo-area h1 { font-size:1.7rem; font-weight:800; background:linear-gradient(135deg,#5865F2,#57F287); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .logo-area p { color:var(--muted); font-size:0.85rem; margin-top:0.3rem; }
+
+    /* Card */
+    .card { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:2rem; box-shadow:0 20px 60px rgba(0,0,0,0.5); }
+
+    /* Section par défaut (avant clic) */
+    .section { display:none; }
+    .section.active { display:block; }
+
+    /* ── Écran d'accueil ── */
+    .welcome-icon { font-size:2.5rem; text-align:center; margin-bottom:1rem; }
+    .welcome-title { font-size:1.2rem; font-weight:700; text-align:center; margin-bottom:0.4rem; }
+    .welcome-sub { color:var(--muted); font-size:0.85rem; text-align:center; margin-bottom:1.5rem; line-height:1.5; }
+
+    .perms-box { background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:1rem 1.2rem; margin-bottom:1.5rem; }
+    .perms-title { font-size:0.75rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:0.75rem; }
+    .perm-item { display:flex; align-items:center; gap:0.6rem; padding:0.4rem 0; font-size:0.875rem; }
+    .perm-item + .perm-item { border-top:1px solid var(--border); }
+    .perm-icon { font-size:1rem; width:24px; text-align:center; flex-shrink:0; }
+    .perm-text { flex:1; }
+    .perm-check { color:var(--success); font-weight:700; }
+
+    .btn { width:100%; padding:0.85rem 1.5rem; border:none; border-radius:12px; font-family:'Inter',sans-serif; font-size:1rem; font-weight:600; cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:center; gap:0.5rem; }
+    .btn-discord { background:linear-gradient(135deg,#5865F2,#7289da); color:white; }
+    .btn-discord:hover { background:linear-gradient(135deg,#4752c4,#5f73bc); transform:translateY(-2px); box-shadow:0 8px 25px rgba(88,101,242,0.4); }
+    .btn-discord svg { width:20px; height:20px; fill:white; flex-shrink:0; }
+
+    .disclaimer { text-align:center; color:var(--muted); font-size:0.75rem; margin-top:0.75rem; line-height:1.4; }
+
+    /* ── Écran succès ── */
+    .success-icon { font-size:3rem; text-align:center; margin-bottom:1rem; animation:pop .4s ease; }
+    @keyframes pop { 0%{transform:scale(0)} 80%{transform:scale(1.1)} 100%{transform:scale(1)} }
+    .success-title { font-size:1.3rem; font-weight:700; text-align:center; color:var(--success); margin-bottom:0.4rem; }
+    .success-sub { color:var(--muted); font-size:0.875rem; text-align:center; margin-bottom:1.5rem; line-height:1.5; }
+
+    .user-card { display:flex; align-items:center; gap:1rem; background:var(--card2); border:1px solid rgba(87,242,135,0.2); border-radius:12px; padding:1rem 1.2rem; margin-bottom:1.5rem; }
+    .user-avatar { width:48px; height:48px; border-radius:50%; border:2px solid var(--success); object-fit:cover; }
+    .user-avatar-placeholder { width:48px; height:48px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-size:1.3rem; font-weight:700; color:white; flex-shrink:0; }
+    .user-name { font-weight:600; font-size:1rem; }
+    .user-badge { display:inline-flex; align-items:center; gap:0.3rem; background:rgba(87,242,135,0.1); border:1px solid rgba(87,242,135,0.3); color:var(--success); padding:0.2rem 0.6rem; border-radius:999px; font-size:0.7rem; font-weight:600; margin-top:0.2rem; }
+
+    .btn-return { background:rgba(88,101,242,0.15); border:1px solid rgba(88,101,242,0.3); color:var(--accent); font-weight:600; padding:0.7rem; border-radius:10px; width:100%; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.875rem; transition:all .2s; }
+    .btn-return:hover { background:rgba(88,101,242,0.25); }
+
+    /* ── Écran erreur ── */
+    .error-icon { font-size:3rem; text-align:center; margin-bottom:1rem; }
+    .error-title { font-size:1.2rem; font-weight:700; text-align:center; color:var(--error); margin-bottom:0.4rem; }
+    .error-sub { color:var(--muted); font-size:0.875rem; text-align:center; margin-bottom:1.5rem; line-height:1.5; }
+    .error-box { background:rgba(237,66,69,0.08); border:1px solid rgba(237,66,69,0.2); border-radius:10px; padding:0.75rem 1rem; font-size:0.8rem; color:#f88; margin-bottom:1.5rem; text-align:center; }
+
+    .footer { text-align:center; margin-top:1.5rem; color:var(--muted); font-size:0.75rem; }
+  </style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="container">
+  <div class="logo-area">
+    <span class="planet">🪐</span>
+    <h1>Gravity Voice</h1>
+    <p>Roblox Game • Vérification Discord</p>
+  </div>
+
+  <div class="card">
+
+    <!-- Écran d'accueil -->
+    <div class="section" id="screen-home">
+      <div class="welcome-icon">🔐</div>
+      <div class="welcome-title">Vérification requise</div>
+      <div class="welcome-sub">Pour accéder au serveur Discord de <strong>Gravity Voice</strong>, tu dois autoriser l'application sur ton compte Discord.</div>
+
+      <div class="perms-box">
+        <div class="perms-title">L'application demande l'accès à :</div>
+        <div class="perm-item">
+          <span class="perm-icon">👤</span>
+          <span class="perm-text">Ton nom d'utilisateur et avatar</span>
+          <span class="perm-check">✓</span>
+        </div>
+        <div class="perm-item">
+          <span class="perm-icon">📧</span>
+          <span class="perm-text">Ton adresse e-mail</span>
+          <span class="perm-check">✓</span>
+        </div>
+        <div class="perm-item">
+          <span class="perm-icon">🏠</span>
+          <span class="perm-text">Savoir quels serveurs tu rejoins</span>
+          <span class="perm-check">✓</span>
+        </div>
+      </div>
+
+      <button class="btn btn-discord" id="authBtn">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+        Autoriser avec Discord
+      </button>
+      <div class="disclaimer">En autorisant, tu acceptes les conditions d'utilisation de Gravity Voice.<br>Nous ne stockons aucune donnée personnelle.</div>
+    </div>
+
+    <!-- Écran succès -->
+    <div class="section" id="screen-success">
+      <div class="success-icon">🎉</div>
+      <div class="success-title">Vérification réussie !</div>
+      <div class="success-sub">Tu as bien été vérifié sur le serveur <strong>Gravity Voice</strong>. Tu peux maintenant accéder à tous les salons !</div>
+      <div class="user-card" id="userCard">
+        <div class="user-avatar-placeholder" id="userAvatarPlaceholder">?</div>
+        <div>
+          <div class="user-name" id="userName">—</div>
+          <div class="user-badge">✅ Vérifié</div>
+        </div>
+      </div>
+      <button class="btn-return" onclick="window.close()">Retourner sur Discord →</button>
+    </div>
+
+    <!-- Écran erreur -->
+    <div class="section" id="screen-error">
+      <div class="error-icon">❌</div>
+      <div class="error-title">Vérification échouée</div>
+      <div class="error-sub">Une erreur est survenue lors de ta vérification.</div>
+      <div class="error-box" id="errorMsg">Erreur inconnue</div>
+      <button class="btn btn-discord" onclick="location.href=location.pathname">Réessayer</button>
+    </div>
+
+  </div>
+
+  <div class="footer">© 2026 Gravity Voice • Tous droits réservés</div>
+</div>
+
+<script>
+  // Étoiles
+  const sc = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const sz = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${Math.random()*4+2}s;--o:${Math.random()*0.5+0.2};animation-delay:${Math.random()*5}s`;
+    sc.appendChild(s);
+  }
+
+  const params = new URLSearchParams(window.location.search);
+
+  // Erreurs des messages d'erreur
+  const errorMessages = {
+    no_code: 'Autorisation annulée ou code manquant.',
+    token_failed: 'Impossible d\'obtenir le token Discord.',
+    user_failed: 'Impossible de récupérer tes informations Discord.',
+    not_in_server: 'Tu dois d\'abord rejoindre le serveur Discord de Gravity Voice !',
+    internal: 'Erreur interne du serveur. Contacte un administrateur.',
+  };
+
+  function showScreen(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  // Vérifier l'état au chargement
+  if (params.get('success') === '1') {
+    const username = params.get('username') || 'Inconnu';
+    const avatar = params.get('avatar');
+    const userId = params.get('id');
+
+    document.getElementById('userName').textContent = username;
+
+    if (avatar && userId) {
+      const img = document.createElement('img');
+      img.className = 'user-avatar';
+      img.src = `https://cdn.discordapp.com/avatars/${userId}/${avatar}.png?size=64`;
+      img.onerror = () => {
+        document.getElementById('userAvatarPlaceholder').textContent = username[0].toUpperCase();
+      };
+      document.getElementById('userCard').replaceChild(img, document.getElementById('userAvatarPlaceholder'));
+    } else {
+      document.getElementById('userAvatarPlaceholder').textContent = username[0].toUpperCase();
+    }
+
+    showScreen('screen-success');
+
+  } else if (params.get('error')) {
+    const err = params.get('error');
+    document.getElementById('errorMsg').textContent = errorMessages[err] || `Erreur : ${err}`;
+    showScreen('screen-error');
+
+  } else {
+    // Écran d'accueil : construire le lien OAuth2
+    const oauthUrl = params.get('oauth');
+    if (oauthUrl) {
+      document.getElementById('authBtn').onclick = () => {
+        window.location.href = decodeURIComponent(oauthUrl);
+      };
+    } else {
+      // Fallback : construire depuis les params
+      const clientId = params.get('client_id');
+      const redirect = params.get('redirect');
+      if (clientId && redirect) {
+        const url = `https://discord.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirect)}&response_type=code&scope=identify%20email%20guilds.join`;
+        document.getElementById('authBtn').onclick = () => { window.location.href = url; };
+      }
+    }
+    showScreen('screen-home');
+  }
+</script>
+</body>
+</html>

@@ -1,67 +1,51 @@
 const { EmbedBuilder } = require('discord.js');
-const { v4: uuidv4 } = require('uuid');
-
-// Stockage en mémoire des tokens de vérification (en prod, utiliser une base de données)
-const pendingVerifications = new Map();
 
 async function startVerification(interaction, client) {
   await interaction.deferReply({ ephemeral: true });
 
   const member = interaction.member;
-  const guild = interaction.guild;
 
   // Vérifier si déjà vérifié
-  if (member.roles.cache.has(process.env.VERIFIED_ROLE_ID)) {
+  if (process.env.VERIFIED_ROLE_ID && member.roles.cache.has(process.env.VERIFIED_ROLE_ID)) {
     return interaction.editReply({ content: '✅ Tu es déjà vérifié !' });
   }
 
-  // Générer un token unique
-  const token = uuidv4();
-  const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+  const clientId   = process.env.CLIENT_ID;
+  const apiUrl     = process.env.API_URL || 'http://localhost:3000';
+  const siteUrl    = process.env.SITE_URL || apiUrl;
+  const redirectUri = `${apiUrl}/callback`;
 
-  pendingVerifications.set(token, {
-    userId: member.id,
-    guildId: guild.id,
-    expiresAt,
-  });
+  // Construire l'URL OAuth2 Discord
+  const oauthUrl = `https://discord.com/oauth2/authorize` +
+    `?client_id=${clientId}` +
+    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+    `&response_type=code` +
+    `&scope=identify%20email%20guilds.join`;
 
-  // Nettoyer les tokens expirés
-  for (const [t, data] of pendingVerifications.entries()) {
-    if (Date.now() > data.expiresAt) pendingVerifications.delete(t);
-  }
+  // Lien vers le site de vérification avec l'URL OAuth2 en paramètre
+  const verifyPageUrl = `${siteUrl}?oauth=${encodeURIComponent(oauthUrl)}`;
 
-  // Le lien pointe vers le site GitHub Pages avec le token ET l'URL de l'API en paramètre
-  const apiUrl = process.env.API_URL || 'http://localhost:3000';
-  const siteUrl = process.env.SITE_URL || 'http://localhost:3000';
-  const verifyUrl = `${siteUrl}?token=${token}&api=${encodeURIComponent(apiUrl)}`;
-
-  // Envoyer le lien en MP
   try {
     const dmEmbed = new EmbedBuilder()
       .setTitle('🔐 Vérification Gravity Voice')
       .setDescription(
-        `Clique sur le lien ci-dessous pour te vérifier sur **${guild.name}** :\n\n` +
-        `🔗 **[Cliquer ici pour se vérifier](${verifyUrl})**\n\n` +
-        `> ⏳ Ce lien expire dans **10 minutes**.\n` +
+        `Clique sur le bouton ci-dessous pour te vérifier sur **${interaction.guild.name}** :\n\n` +
+        `🔗 **[Cliquer ici pour se vérifier](${verifyPageUrl})**\n\n` +
         `> ⚠️ Ne partage jamais ce lien avec quelqu'un d'autre.`
       )
       .setColor(0x57F287)
-      .setFooter({ text: 'Gravity Voice • Vérification anti-bot' })
+      .setFooter({ text: 'Gravity Voice • Vérification OAuth2 Discord' })
       .setTimestamp();
 
     await member.send({ embeds: [dmEmbed] });
     await interaction.editReply({
-      content: '📩 Un lien de vérification t\'a été envoyé en message privé ! Vérifie tes MP.',
+      content: '📩 Un lien de vérification t\'a été envoyé en message privé !',
     });
   } catch {
     await interaction.editReply({
-      content: `❌ Impossible de t'envoyer un MP. Active tes messages privés !\n\nOu utilise ce lien directement : ${verifyUrl}`,
+      content: `❌ Impossible de t'envoyer un MP. Active tes messages privés !\n\nOu clique directement ici : ${verifyPageUrl}`,
     });
   }
 }
 
-function getPendingVerifications() {
-  return pendingVerifications;
-}
-
-module.exports = { startVerification, getPendingVerifications };
+module.exports = { startVerification };
