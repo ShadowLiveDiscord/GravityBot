@@ -350,7 +350,10 @@
       spinner.style.display = 'block';
 
       try {
-        const res = await fetch('/api/verify', {
+        // L'URL de l'API est passée en paramètre "api" dans le lien
+        const params = new URLSearchParams(window.location.search);
+        const apiBase = params.get('api') || 'http://localhost:3000';
+        const res = await fetch(apiBase + '/api/verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token }),
