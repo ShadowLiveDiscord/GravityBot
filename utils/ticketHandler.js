@@ -74,15 +74,22 @@ async function createTicket(interaction, client) {
   });
 
   const embed = new EmbedBuilder()
-    .setTitle(category.label)
+    .setTitle(`${category.label}`)
     .setDescription(
       `Bonjour ${member} ! 👋\n\n` +
-      `Merci d'avoir ouvert un ticket **${category.label}**.\n\n` +
-      `📝 **Décris ta demande** en détail et notre équipe te répondra dès que possible.\n\n` +
-      `> Utilise les boutons ci-dessous pour gérer ce ticket.`
+      `> Ton ticket a bien été créé.\n` +
+      `> **Décris ta demande** clairement et notre équipe te répondra dès que possible.\n\n` +
+      `\`\`\`\n` +
+      `  Merci de rester patient, nous répondons sous 24h.\n` +
+      `\`\`\``
     )
     .setColor(category.color)
-    .setFooter({ text: 'Gravity Voice • Support' })
+    .addFields(
+      { name: '📁  Catégorie', value: `> ${category.label}`,        inline: true },
+      { name: '👤  Ouvert par', value: `> ${member}`,               inline: true },
+      { name: '📅  Le',         value: `> <t:${Math.floor(Date.now() / 1000)}:F>`, inline: true },
+    )
+    .setFooter({ text: 'Gravity Voice  •  Support' })
     .setTimestamp();
 
   const staffRole = process.env.STAFF_ROLE_ID ? `<@&${process.env.STAFF_ROLE_ID}>` : '@Staff';
