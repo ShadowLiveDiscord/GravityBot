@@ -100,6 +100,106 @@ module.exports = {
           return;
         }
 
+        // ── Gestion des tickets depuis le panel ──────────────────────────
+
+        // Lister les tickets ouverts
+        if (action === 'ticket_list') {
+          const tickets = interaction.guild.channels.cache.filter(
+            c => c.name.startsWith('ticket-') && c.parentId === process.env.TICKET_CATEGORY_ID
+          );
+          if (tickets.size === 0) {
+            await interaction.reply({ content: '📂 Aucun ticket ouvert en ce moment.', ephemeral: true });
+            return;
+          }
+          const list = tickets.map(c => `> ${c} — \`${c.name}\``).join('\n');
+          await interaction.reply({
+            embeds: [
+              new EmbedBuilder()
+                .setTitle(`📂 Tickets ouverts (${tickets.size})`)
+                .setDescription(list)
+                .setColor(0x5865F2),
+            ],
+            ephemeral: true,
+          });
+          return;
+        }
+
+        // Ajouter un membre dans un ticket
+        if (action === 'ticket_add') {
+          const { ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+          const modal = new ModalBuilder()
+            .setCustomId('panel_modal_ticket_add')
+            .setTitle('➕ Ajouter un membre dans un ticket');
+          modal.addComponents(
+            new ActionRowBuilder().addComponents(
+              new TextInputBuilder()
+                .setCustomId('ticket_channel_input')
+                .setLabel('Nom ou ID du salon ticket')
+                .setPlaceholder('Ex: ticket-shadow ou 123456789012345678')
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true)
+            ),
+            new ActionRowBuilder().addComponents(
+              new TextInputBuilder()
+                .setCustomId('ticket_user_input')
+                .setLabel('ID ou @mention du membre à ajouter')
+                .setPlaceholder('Ex: 123456789012345678 ou @pseudo')
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true)
+            ),
+          );
+          await interaction.showModal(modal);
+          return;
+        }
+
+        // Retirer un membre d'un ticket
+        if (action === 'ticket_remove') {
+          const { ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+          const modal = new ModalBuilder()
+            .setCustomId('panel_modal_ticket_remove')
+            .setTitle('➖ Retirer un membre d\'un ticket');
+          modal.addComponents(
+            new ActionRowBuilder().addComponents(
+              new TextInputBuilder()
+                .setCustomId('ticket_channel_input')
+                .setLabel('Nom ou ID du salon ticket')
+                .setPlaceholder('Ex: ticket-shadow ou 123456789012345678')
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true)
+            ),
+            new ActionRowBuilder().addComponents(
+              new TextInputBuilder()
+                .setCustomId('ticket_user_input')
+                .setLabel('ID ou @mention du membre à retirer')
+                .setPlaceholder('Ex: 123456789012345678 ou @pseudo')
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true)
+            ),
+          );
+          await interaction.showModal(modal);
+          return;
+        }
+
+        // Fermer un ticket depuis le panel
+        if (action === 'ticket_close_one') {
+          const { ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+          const modal = new ModalBuilder()
+            .setCustomId('panel_modal_ticket_close')
+            .setTitle('🔒 Fermer un ticket');
+          modal.addComponents(
+            new ActionRowBuilder().addComponents(
+              new TextInputBuilder()
+                .setCustomId('ticket_channel_input')
+                .setLabel('Nom ou ID du salon ticket')
+                .setPlaceholder('Ex: ticket-shadow ou 123456789012345678')
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true)
+            ),
+          );
+          await interaction.showModal(modal);
+          return;
+        }
+
         // Poster règlement, tickets, candidatures — demande le salon cible
         if (['reglement', 'ticket', 'candidature'].includes(action)) {
           const labels = { reglement: 'règlement', ticket: 'panneau de tickets', candidature: 'panneau de candidatures' };
@@ -276,6 +376,8 @@ module.exports = {
 
     // ── Modales ──────────────────────────────────────────────────────────────
     if (interaction.isModalSubmit()) {
+
+      // Modales depuis le ticket lui-même
       if (interaction.customId === 'modal_add_to_ticket') {
         await handleTicket.handleAddToTicket(interaction, client);
         return;
@@ -283,6 +385,87 @@ module.exports = {
       if (interaction.customId === 'modal_remove_from_ticket') {
         await handleTicket.handleRemoveFromTicket(interaction, client);
         return;
+      }
+
+      // ── Modales depuis le panel admin ────────────────────────────────────
+      if (interaction.customId.startsWith('panel_modal_ticket_')) {
+        const guild = interaction.guild;
+        const rawChannel = interaction.fields.getTextInputValue('ticket_channel_input').trim();
+
+        // Trouver le salon ticket (par nom ou ID)
+        const channelId = rawChannel.replace(/[<#>]/g, '');
+        const ticketChannel = guild.channels.cache.get(channelId) ||
+          guild.channels.cache.find(c => c.name === rawChannel || c.name === `ticket-${rawChannel}`);
+
+        if (!ticketChannel || !ticketChannel.name.startsWith('ticket-')) {
+          await interaction.reply({ content: `❌ Salon ticket introuvable : \`${rawChannel}\`\n\nUtilise le bouton **📂 Voir les tickets** pour connaître les noms exacts.`, ephemeral: true });
+          return;
+        }
+
+        // Ajouter un membre
+        if (interaction.customId === 'panel_modal_ticket_add') {
+          const rawUser = interaction.fields.getTextInputValue('ticket_user_input').trim();
+          const userId  = rawUser.replace(/[<@!>]/g, '');
+          try {
+            const member = await guild.members.fetch(userId);
+            await ticketChannel.permissionOverwrites.edit(member, {
+              ViewChannel: true, SendMessages: true, ReadMessageHistory: true,
+            });
+            await ticketChannel.send({ content: `👋 ${member} a été ajouté à ce ticket par <@${interaction.user.id}>.` });
+            await interaction.reply({
+              embeds: [new EmbedBuilder().setDescription(`✅ **${member.user.tag}** ajouté dans ${ticketChannel}.`).setColor(0x57F287)],
+              ephemeral: true,
+            });
+          } catch {
+            await interaction.reply({ content: `❌ Membre introuvable : \`${rawUser}\``, ephemeral: true });
+          }
+          return;
+        }
+
+        // Retirer un membre
+        if (interaction.customId === 'panel_modal_ticket_remove') {
+          const rawUser = interaction.fields.getTextInputValue('ticket_user_input').trim();
+          const userId  = rawUser.replace(/[<@!>]/g, '');
+          try {
+            const member = await guild.members.fetch(userId);
+            if (process.env.STAFF_ROLE_ID && member.roles.cache.has(process.env.STAFF_ROLE_ID)) {
+              await interaction.reply({ content: `❌ Impossible de retirer un membre du staff.`, ephemeral: true });
+              return;
+            }
+            await ticketChannel.permissionOverwrites.delete(member);
+            await ticketChannel.send({ content: `🚪 **${member.user.tag}** a été retiré de ce ticket par <@${interaction.user.id}>.` });
+            await interaction.reply({
+              embeds: [new EmbedBuilder().setDescription(`✅ **${member.user.tag}** retiré de ${ticketChannel}.`).setColor(0xED4245)],
+              ephemeral: true,
+            });
+          } catch {
+            await interaction.reply({ content: `❌ Membre introuvable : \`${rawUser}\``, ephemeral: true });
+          }
+          return;
+        }
+
+        // Fermer un ticket
+        if (interaction.customId === 'panel_modal_ticket_close') {
+          const logChannel = guild.channels.cache.get(process.env.TICKET_LOG_CHANNEL_ID);
+          if (logChannel) {
+            await logChannel.send({
+              embeds: [
+                new EmbedBuilder()
+                  .setTitle('🔒 Ticket fermé')
+                  .addFields(
+                    { name: 'Salon',     value: ticketChannel.name,      inline: true },
+                    { name: 'Fermé par', value: interaction.user.tag,    inline: true },
+                    { name: 'Depuis',    value: 'Panel admin',           inline: true },
+                  )
+                  .setColor(0xED4245)
+                  .setTimestamp(),
+              ],
+            });
+          }
+          await interaction.reply({ content: `🔒 Fermeture de \`${ticketChannel.name}\` dans 5 secondes...`, ephemeral: true });
+          setTimeout(() => ticketChannel.delete().catch(console.error), 5000);
+          return;
+        }
       }
     }
   },
