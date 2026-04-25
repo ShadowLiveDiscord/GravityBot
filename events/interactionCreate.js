@@ -45,23 +45,27 @@ module.exports = {
 
         // Actualiser les stats
         if (action === 'refresh') {
-          const guild = interaction.guild;
+          const guild  = interaction.guild;
           const uptime = process.uptime();
           const h = Math.floor(uptime / 3600);
           const m = Math.floor((uptime % 3600) / 60);
           const s = Math.floor(uptime % 60);
+          const mem = process.memoryUsage();
+          const openTickets = guild.channels.cache.filter(
+            c => c.name.startsWith('ticket-') && c.parentId === process.env.TICKET_CATEGORY_ID
+          ).size;
 
           const embed = EmbedBuilder.from(interaction.message.embeds[0])
             .spliceFields(0, 1, {
-              name: '📊 Statut du bot',
+              name: '╔══ 📊 STATUT ══════════════════╗',
               value:
-                `> 🟢 **En ligne**\n` +
+                `> 🟢 En ligne  •  🏓 \`${client.ws.ping}ms\`\n` +
                 `> ⏱️ Uptime : \`${h}h ${m}m ${s}s\`\n` +
-                `> 👥 Membres : \`${guild.memberCount}\`\n` +
-                `> 🏓 Ping : \`${client.ws.ping}ms\``,
+                `> 💾 RAM : \`${Math.round(mem.heapUsed / 1024 / 1024)} MB\`\n` +
+                `> 👥 Membres : \`${guild.memberCount}\`  •  🎫 Tickets : \`${openTickets}\`\n` +
+                `╚══════════════════════════════╝`,
             })
-            .setFooter({ text: `GravityBot • Actualisé par ${interaction.user.tag}` })
-            .setTimestamp();
+            .setFooter({ text: `Actualisé par ${interaction.user.tag}  •  ${new Date().toLocaleString('fr-FR')}` });
 
           await interaction.update({ embeds: [embed] });
           return;
