@@ -1,4 +1,11 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  PermissionFlagsBits,
+} = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -11,9 +18,8 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setTitle('📜 | Règlement du serveur')
-      .setDescription('Bienvenue sur **Gravity Voice** ! Merci de lire et respecter les règles suivantes.')
+      .setDescription('Bienvenue sur **Gravity Voice** ! Merci de lire et respecter les règles suivantes.\nEn cliquant sur **"J\'accepte le règlement"**, tu accèdes au reste du serveur.')
       .setColor(0x5865F2)
-      .setThumbnail('https://i.imgur.com/gravity_logo.png')
       .addFields(
         {
           name: '🔒 1 | Respect absolu',
@@ -44,12 +50,17 @@ module.exports = {
           value: '➡️ Tout non-respect de ces règles peut entraîner un mute, un kick ou un ban, selon la gravité.',
         }
       )
-      .setFooter({ text: 'Gravity Voice • En acceptant ces règles, vous vous engagez à les respecter.' })
+      .setFooter({ text: 'Gravity Voice • Clique sur le bouton ci-dessous pour accéder au serveur.' })
       .setTimestamp();
 
-    const channel = interaction.channel;
-    await channel.send({ embeds: [embed] });
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('accept_reglement')
+        .setLabel('✅  J\'accepte le règlement')
+        .setStyle(ButtonStyle.Success),
+    );
 
+    await interaction.channel.send({ embeds: [embed], components: [row] });
     await interaction.editReply({ content: '✅ Le règlement a été posté avec succès !' });
   },
 };

@@ -1,6 +1,5 @@
 const { Events, EmbedBuilder } = require('discord.js');
 const handleTicket = require('../utils/ticketHandler');
-const handleVerification = require('../utils/verificationHandler');
 
 module.exports = {
   name: Events.InteractionCreate,
@@ -27,9 +26,35 @@ module.exports = {
     // ── Boutons ──────────────────────────────────────────────────────────────
     if (interaction.isButton()) {
 
-      // Vérification
-      if (interaction.customId === 'start_verification') {
-        await handleVerification.startVerification(interaction, client);
+      // ✅ Acceptation du règlement → donne le rôle membre
+      if (interaction.customId === 'accept_reglement') {
+        const roleId = process.env.VERIFIED_ROLE_ID;
+
+        if (!roleId) {
+          await interaction.reply({ content: '❌ Rôle membre non configuré. Contacte un admin.', ephemeral: true });
+          return;
+        }
+
+        // Déjà vérifié
+        if (interaction.member.roles.cache.has(roleId)) {
+          await interaction.reply({ content: '✅ Tu as déjà accepté le règlement !', ephemeral: true });
+          return;
+        }
+
+        try {
+          await interaction.member.roles.add(roleId);
+          await interaction.reply({
+            embeds: [
+              new EmbedBuilder()
+                .setDescription('✅ **Bienvenue sur Gravity Voice !**\nTu as accepté le règlement et accèdes maintenant à tous les salons. Amuse-toi bien 🪐')
+                .setColor(0x57F287),
+            ],
+            ephemeral: true,
+          });
+        } catch (err) {
+          console.error('Erreur attribution rôle membre:', err);
+          await interaction.reply({ content: '❌ Impossible d\'attribuer le rôle. Vérifie les permissions du bot.', ephemeral: true });
+        }
         return;
       }
 
@@ -47,9 +72,9 @@ module.exports = {
         candidature_testeur:    'testeur',
       };
       if (postesMap[interaction.customId]) {
-        const poste = postesMap[interaction.customId];
-        const apiUrl  = process.env.API_URL  || 'http://localhost:3000';
-        const siteUrl = process.env.SITE_URL || 'http://localhost:3000';
+        const poste    = postesMap[interaction.customId];
+        const apiUrl   = process.env.API_URL  || 'http://localhost:3000';
+        const siteUrl  = process.env.SITE_URL || 'http://localhost:3000';
         const userId   = interaction.user.id;
         const username = encodeURIComponent(interaction.user.username);
         const formUrl  = `${siteUrl}/candidature.html?poste=${poste}&user_id=${userId}&username=${username}&api=${encodeURIComponent(apiUrl)}`;
@@ -82,7 +107,6 @@ module.exports = {
         const accepted = interaction.customId.startsWith('candidature_accept_');
         const targetId = interaction.customId.replace('candidature_accept_', '').replace('candidature_refuse_', '');
 
-        // Modifier l'embed original pour indiquer la décision
         const originalEmbed = EmbedBuilder.from(interaction.message.embeds[0]);
         originalEmbed
           .setColor(accepted ? 0x57F287 : 0xED4245)
@@ -90,7 +114,6 @@ module.exports = {
 
         await interaction.message.edit({ embeds: [originalEmbed], components: [] });
 
-        // Notifier le candidat en MP
         if (targetId && targetId !== 'unknown') {
           try {
             const targetUser = await client.users.fetch(targetId);
@@ -105,9 +128,7 @@ module.exports = {
               .setFooter({ text: 'Gravity Voice • Candidatures' })
               .setTimestamp();
             await targetUser.send({ embeds: [dmEmbed] });
-          } catch {
-            // L'utilisateur a les MP désactivés
-          }
+          } catch { /* MP désactivés */ }
         }
 
         await interaction.reply({
