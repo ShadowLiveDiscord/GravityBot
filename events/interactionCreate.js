@@ -1,6 +1,6 @@
 const { Events, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const handleTicket = require('../utils/ticketHandler');
-const panelHandler = require('../utils/panelHandler');
+const handleTicket  = require('../utils/ticketHandler');
+const panelHandler  = require('../utils/panelHandler');
 
 module.exports = {
   name: Events.InteractionCreate,
@@ -183,9 +183,17 @@ module.exports = {
         return;
       }
 
-      // ── Fermer un ticket ─────────────────────────────────────────────────
+      // ── Ticket : fermer / ajouter / retirer ─────────────────────────────
       if (interaction.customId === 'close_ticket') {
         await handleTicket.closeTicket(interaction, client);
+        return;
+      }
+      if (interaction.customId === 'add_to_ticket') {
+        await handleTicket.openAddModal(interaction);
+        return;
+      }
+      if (interaction.customId === 'remove_from_ticket') {
+        await handleTicket.openRemoveModal(interaction);
         return;
       }
 
@@ -262,6 +270,18 @@ module.exports = {
     if (interaction.isStringSelectMenu()) {
       if (interaction.customId === 'ticket_select') {
         await handleTicket.createTicket(interaction, client);
+        return;
+      }
+    }
+
+    // ── Modales ──────────────────────────────────────────────────────────────
+    if (interaction.isModalSubmit()) {
+      if (interaction.customId === 'modal_add_to_ticket') {
+        await handleTicket.handleAddToTicket(interaction, client);
+        return;
+      }
+      if (interaction.customId === 'modal_remove_from_ticket') {
+        await handleTicket.handleRemoveFromTicket(interaction, client);
         return;
       }
     }
