@@ -31,49 +31,28 @@ async function postReglement(channel) {
 // ── Embed tickets ────────────────────────────────────────────────────────────
 async function postTickets(channel) {
   const embed = new EmbedBuilder()
-    .setTitle('🎫  Support — Gravity Voice')
+    .setTitle('🎫 Support — Gravity Voice')
     .setDescription(
-      '```\n' +
-      '  Besoin d\'aide ? Nous sommes là pour toi.\n' +
-      '```\n' +
-      '> Sélectionne une catégorie dans le menu ci-dessous.\n' +
-      '> Un **salon privé** sera créé instantanément.\n\n' +
-      '⏱️  Temps de réponse moyen : **moins de 24h**'
+      '> Bienvenue dans le support de **Gravity Voice** !\n\n' +
+      '**Comment ouvrir un ticket ?**\n' +
+      '╔ Choisis une catégorie dans le menu déroulant\n' +
+      '╠ Un salon privé sera créé pour toi\n' +
+      '╚ Notre équipe te répondra rapidement\n\n' +
+      '```\n⏱️  Temps de réponse moyen : < 24h\n```'
     )
     .setColor(0x5865F2)
-    .addFields(
-      {
-        name: '🐛  Bug Report',
-        value: '> Signaler un bug dans le jeu',
-        inline: true,
-      },
-      {
-        name: '💡  Suggestion',
-        value: '> Proposer une idée',
-        inline: true,
-      },
-      {
-        name: '⚖️  Sanction',
-        value: '> Contester une sanction',
-        inline: true,
-      },
-      {
-        name: '🤝  Partenariat',
-        value: '> Proposer un partenariat',
-        inline: true,
-      },
-      {
-        name: '❓  Question',
-        value: '> Poser une question',
-        inline: true,
-      },
-      {
-        name: '🛠️  Autre',
-        value: '> Toute autre demande',
-        inline: true,
-      },
-    )
-    .setFooter({ text: 'Gravity Voice  •  Ne pas abuser du système de tickets' })
+    .addFields({
+      name: '╔══════════════════════╗',
+      value:
+        '🐛 **Bug Report** — Signaler un bug\n' +
+        '💡 **Suggestion** — Proposer une idée\n' +
+        '⚖️ **Sanction** — Contester une sanction\n' +
+        '🤝 **Partenariat** — Proposer un partenariat\n' +
+        '❓ **Question** — Poser une question\n' +
+        '🛠️ **Autre** — Toute autre demande\n' +
+        '╚══════════════════════╝',
+    })
+    .setFooter({ text: '⚠️ Gravity Voice • Merci de ne pas abuser du système de tickets' })
     .setTimestamp();
 
   const selectMenu = new StringSelectMenuBuilder()
