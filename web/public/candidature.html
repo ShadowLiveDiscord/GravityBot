@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Candidature — Gravity Voice</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d1a;
+      --card: #13132a;
+      --card2: #1a1a35;
+      --border: #2a2a4a;
+      --accent: #EB459E;
+      --accent2: #5865F2;
+      --success: #57F287;
+      --error: #ED4245;
+      --text: #e2e2f0;
+      --muted: #8888aa;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 2rem 1.5rem;
+      background-image:
+        radial-gradient(ellipse at 10% 40%, rgba(235,69,158,0.12) 0%, transparent 55%),
+        radial-gradient(ellipse at 90% 10%, rgba(88,101,242,0.1) 0%, transparent 50%);
+    }
+
+    .stars { position: fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; overflow:hidden; }
+    .star { position:absolute; border-radius:50%; background:white; animation: twinkle var(--d,3s) infinite ease-in-out; opacity:0; }
+    @keyframes twinkle { 0%,100%{opacity:0} 50%{opacity:var(--o,0.6)} }
+
+    .container { position:relative; z-index:1; width:100%; max-width:600px; }
+
+    .logo-area { text-align:center; margin-bottom:2rem; }
+    .planet { font-size:3rem; display:block; margin-bottom:0.5rem; animation:float 4s ease-in-out infinite; }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    .logo-area h1 { font-size:1.6rem; font-weight:800; background:linear-gradient(135deg,#EB459E,#5865F2); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .logo-area p { color:var(--muted); font-size:0.85rem; margin-top:0.3rem; }
+
+    .card { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:2rem; box-shadow:0 20px 60px rgba(0,0,0,0.5); margin-bottom:1.5rem; }
+
+    .card-header { display:flex; align-items:center; gap:1rem; margin-bottom:1.75rem; padding-bottom:1rem; border-bottom:1px solid var(--border); }
+    .card-header .post-icon { font-size:2rem; }
+    .card-header h2 { font-size:1.15rem; font-weight:700; }
+    .card-header p { color:var(--muted); font-size:0.8rem; margin-top:0.2rem; }
+    .badge { display:inline-flex; align-items:center; gap:0.3rem; padding:0.25rem 0.75rem; border-radius:999px; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+    .badge-moderateur { background:rgba(88,101,242,0.15); border:1px solid rgba(88,101,242,0.3); color:#7289da; }
+    .badge-helper     { background:rgba(87,242,135,0.12); border:1px solid rgba(87,242,135,0.25); color:#57F287; }
+    .badge-graphiste  { background:rgba(235,69,158,0.12); border:1px solid rgba(235,69,158,0.25); color:#EB459E; }
+    .badge-testeur    { background:rgba(254,231,92,0.12); border:1px solid rgba(254,231,92,0.25); color:#FEE75C; }
+
+    .form-group { margin-bottom:1.25rem; }
+    .form-group label { display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.5rem; color:var(--text); }
+    .form-group label span { color:var(--accent); margin-left:2px; }
+    .form-group .hint { font-size:0.75rem; color:var(--muted); margin-top:0.3rem; }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+      width:100%;
+      background:var(--card2);
+      border:1px solid var(--border);
+      border-radius:10px;
+      color:var(--text);
+      font-family:'Inter',sans-serif;
+      font-size:0.9rem;
+      padding:0.75rem 1rem;
+      transition:border-color .2s, box-shadow .2s;
+      outline:none;
+      resize:vertical;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color:var(--accent);
+      box-shadow:0 0 0 3px rgba(235,69,158,0.15);
+    }
+
+    select option { background:var(--card2); }
+
+    .char-count { font-size:0.72rem; color:var(--muted); text-align:right; margin-top:0.3rem; }
+    .char-count.warn { color:var(--accent); }
+
+    .divider { border:none; border-top:1px solid var(--border); margin:1.5rem 0; }
+
+    .btn { width:100%; padding:0.9rem; border:none; border-radius:12px; font-family:'Inter',sans-serif; font-size:1rem; font-weight:700; cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:center; gap:0.5rem; }
+    .btn-submit { background:linear-gradient(135deg,#EB459E,#c4368a); color:white; }
+    .btn-submit:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 8px 25px rgba(235,69,158,0.35); }
+    .btn-submit:disabled { opacity:0.55; cursor:not-allowed; transform:none; }
+
+    .spinner { width:18px; height:18px; border:2px solid rgba(255,255,255,0.3); border-top-color:white; border-radius:50%; animation:spin .7s linear infinite; display:none; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    .alert { display:none; padding:1rem 1.25rem; border-radius:12px; font-size:0.875rem; font-weight:500; margin-top:1rem; text-align:center; line-height:1.5; }
+    .alert.success { background:rgba(87,242,135,0.1); border:1px solid rgba(87,242,135,0.3); color:var(--success); }
+    .alert.error   { background:rgba(237,66,69,0.1);  border:1px solid rgba(237,66,69,0.3);  color:var(--error); }
+
+    /* Écran succès */
+    #screen-success { display:none; text-align:center; }
+    #screen-success .big-icon { font-size:4rem; margin-bottom:1rem; animation:pop .4s ease; }
+    @keyframes pop { 0%{transform:scale(0)} 80%{transform:scale(1.15)} 100%{transform:scale(1)} }
+    #screen-success h2 { font-size:1.4rem; font-weight:800; color:var(--success); margin-bottom:0.5rem; }
+    #screen-success p { color:var(--muted); line-height:1.6; font-size:0.9rem; }
+
+    .footer { text-align:center; color:var(--muted); font-size:0.75rem; margin-top:0.5rem; }
+  </style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="container">
+  <div class="logo-area">
+    <span class="planet">🪐</span>
+    <h1>Gravity Voice</h1>
+    <p>Formulaire de candidature staff</p>
+  </div>
+
+  <!-- Formulaire -->
+  <div class="card" id="screen-form">
+    <div class="card-header">
+      <span class="post-icon" id="postIcon">📋</span>
+      <div>
+        <h2 id="postTitle">Candidature</h2>
+        <span class="badge" id="postBadge">Chargement...</span>
+      </div>
+    </div>
+
+    <form id="candidatureForm">
+      <input type="hidden" id="poste" name="poste" />
+      <input type="hidden" id="userId" name="userId" />
+      <input type="hidden" id="username" name="username" />
+
+      <div class="form-group">
+        <label>Ton pseudo Discord <span>*</span></label>
+        <input type="text" id="fieldUsername" placeholder="ex: ShadowLive#0001" required maxlength="50" />
+      </div>
+
+      <div class="form-group">
+        <label>Ton âge <span>*</span></label>
+        <input type="number" id="fieldAge" placeholder="ex: 16" min="10" max="99" required />
+        <div class="hint">Tu dois avoir au moins 13 ans pour postuler.</div>
+      </div>
+
+      <div class="form-group">
+        <label>Depuis combien de temps es-tu sur le serveur ? <span>*</span></label>
+        <select id="fieldAnciennete" required>
+          <option value="" disabled selected>Sélectionne une durée</option>
+          <option value="moins_1_semaine">Moins d'une semaine</option>
+          <option value="1_4_semaines">1 à 4 semaines</option>
+          <option value="1_3_mois">1 à 3 mois</option>
+          <option value="plus_3_mois">Plus de 3 mois</option>
+          <option value="plus_6_mois">Plus de 6 mois</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Combien d'heures par semaine peux-tu consacrer ? <span>*</span></label>
+        <select id="fieldDisponibilite" required>
+          <option value="" disabled selected>Sélectionne une plage</option>
+          <option value="1_5h">1 à 5h / semaine</option>
+          <option value="5_10h">5 à 10h / semaine</option>
+          <option value="10_20h">10 à 20h / semaine</option>
+          <option value="plus_20h">Plus de 20h / semaine</option>
+        </select>
+      </div>
+
+      <hr class="divider" />
+
+      <div class="form-group">
+        <label>Pourquoi veux-tu rejoindre l'équipe ? <span>*</span></label>
+        <textarea id="fieldMotivation" rows="4" maxlength="1000" placeholder="Explique ta motivation, ce que tu peux apporter à Gravity Voice..." required></textarea>
+        <div class="char-count" id="countMotivation">0 / 1000</div>
+      </div>
+
+      <div class="form-group">
+        <label>As-tu de l'expérience dans ce domaine ? <span>*</span></label>
+        <textarea id="fieldExperience" rows="3" maxlength="800" placeholder="Parle de tes expériences précédentes (modération, design, tests, etc.)" required></textarea>
+        <div class="char-count" id="countExperience">0 / 800</div>
+      </div>
+
+      <div class="form-group" id="groupSpecifique">
+        <!-- Question spécifique au poste, injectée par JS -->
+      </div>
+
+      <div class="form-group">
+        <label>As-tu des sanctions actives sur le serveur ? <span>*</span></label>
+        <select id="fieldSanctions" required>
+          <option value="" disabled selected>Sélectionne une réponse</option>
+          <option value="non">Non, aucune sanction</option>
+          <option value="oui_ancienne">Oui, mais c'était il y a longtemps</option>
+          <option value="oui_recente">Oui, récemment</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Informations supplémentaires <span style="color:var(--muted);font-weight:400">(optionnel)</span></label>
+        <textarea id="fieldExtra" rows="2" maxlength="500" placeholder="Tout ce que tu veux ajouter..."></textarea>
+        <div class="char-count" id="countExtra">0 / 500</div>
+      </div>
+
+      <button type="submit" class="btn btn-submit" id="submitBtn">
+        <span id="btnText">📨 Envoyer ma candidature</span>
+        <div class="spinner" id="spinner"></div>
+      </button>
+      <div class="alert" id="alert"></div>
+    </form>
+  </div>
+
+  <!-- Succès -->
+  <div class="card" id="screen-success">
+    <div class="big-icon">🎉</div>
+    <h2>Candidature envoyée !</h2>
+    <p>
+      Ta candidature pour le poste de <strong id="successPoste">—</strong> a bien été transmise à l'équipe de <strong>Gravity Voice</strong>.<br><br>
+      Nous l'examinerons dans les <strong>7 jours</strong> et tu recevras une réponse par message privé Discord.<br><br>
+      Merci pour ton intérêt ! 🚀
+    </p>
+  </div>
+
+  <div class="footer">© 2026 Gravity Voice • Tous droits réservés</div>
+</div>
+
+<script>
+  // Étoiles
+  const sc = document.getElementById('stars');
+  for (let i = 0; i < 70; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const sz = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${Math.random()*4+2}s;--o:${Math.random()*0.5+0.2};animation-delay:${Math.random()*5}s`;
+    sc.appendChild(s);
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const poste = params.get('poste') || 'moderateur';
+  const userId = params.get('user_id') || '';
+  const username = params.get('username') || '';
+
+  // Config par poste
+  const postesConfig = {
+    moderateur: {
+      icon: '🛡️', title: 'Modérateur', badgeClass: 'badge-moderateur',
+      question: 'Comment réagirais-tu face à un conflit entre deux membres ?',
+      placeholder: 'Décris comment tu gérerais la situation...',
+    },
+    helper: {
+      icon: '🎮', title: 'Helper', badgeClass: 'badge-helper',
+      question: 'Comment aiderais-tu un nouveau membre qui ne comprend pas le jeu ?',
+      placeholder: 'Décris ton approche...',
+    },
+    graphiste: {
+      icon: '🎨', title: 'Graphiste', badgeClass: 'badge-graphiste',
+      question: 'Quels outils de design utilises-tu ? (Photoshop, Canva, etc.)',
+      placeholder: 'Liste tes outils et décris ton style...',
+    },
+    testeur: {
+      icon: '🧪', title: 'Testeur', badgeClass: 'badge-testeur',
+      question: 'Comment rapportes-tu un bug ? Donne un exemple de rapport.',
+      placeholder: 'Décris ta méthode de rapport de bug...',
+    },
+  };
+
+  const config = postesConfig[poste] || postesConfig['moderateur'];
+
+  // Remplir l'en-tête
+  document.getElementById('postIcon').textContent = config.icon;
+  document.getElementById('postTitle').textContent = `Candidature ${config.title}`;
+  document.getElementById('postBadge').textContent = `${config.icon} ${config.title}`;
+  document.getElementById('postBadge').className = `badge ${config.badgeClass}`;
+  document.title = `Candidature ${config.title} — Gravity Voice`;
+
+  // Pré-remplir les champs cachés
+  document.getElementById('poste').value = poste;
+  document.getElementById('userId').value = userId;
+  document.getElementById('username').value = username;
+  if (username) document.getElementById('fieldUsername').value = username;
+
+  // Question spécifique au poste
+  document.getElementById('groupSpecifique').innerHTML = `
+    <label>${config.question} <span>*</span></label>
+    <textarea id="fieldSpecifique" rows="3" maxlength="800" placeholder="${config.placeholder}" required></textarea>
+    <div class="char-count" id="countSpecifique">0 / 800</div>
+  `;
+
+  // Compteurs de caractères
+  function setupCounter(fieldId, countId, max) {
+    const field = document.getElementById(fieldId);
+    const counter = document.getElementById(countId);
+    if (!field || !counter) return;
+    field.addEventListener('input', () => {
+      const len = field.value.length;
+      counter.textContent = `${len} / ${max}`;
+      counter.classList.toggle('warn', len > max * 0.9);
+    });
+  }
+  setupCounter('fieldMotivation', 'countMotivation', 1000);
+  setupCounter('fieldExperience', 'countExperience', 800);
+  setupCounter('fieldSpecifique', 'countSpecifique', 800);
+  setupCounter('fieldExtra', 'countExtra', 500);
+
+  // Soumission
+  document.getElementById('candidatureForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const btn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const spinner = document.getElementById('spinner');
+    const alert = document.getElementById('alert');
+
+    const age = parseInt(document.getElementById('fieldAge').value);
+    if (age < 13) {
+      alert.className = 'alert error';
+      alert.textContent = '❌ Tu dois avoir au moins 13 ans pour postuler.';
+      alert.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btnText.textContent = 'Envoi en cours...';
+    spinner.style.display = 'block';
+    alert.style.display = 'none';
+
+    const payload = {
+      poste,
+      userId: document.getElementById('userId').value,
+      username: document.getElementById('fieldUsername').value,
+      age: document.getElementById('fieldAge').value,
+      anciennete: document.getElementById('fieldAnciennete').value,
+      disponibilite: document.getElementById('fieldDisponibilite').value,
+      motivation: document.getElementById('fieldMotivation').value,
+      experience: document.getElementById('fieldExperience').value,
+      specifique: document.getElementById('fieldSpecifique')?.value || '',
+      sanctions: document.getElementById('fieldSanctions').value,
+      extra: document.getElementById('fieldExtra').value,
+    };
+
+    try {
+      const apiBase = params.get('api') || 'http://localhost:3000';
+      const res = await fetch(`${apiBase}/api/candidature`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        document.getElementById('screen-form').style.display = 'none';
+        document.getElementById('successPoste').textContent = config.title;
+        document.getElementById('screen-success').style.display = 'block';
+      } else {
+        throw new Error(data.message || 'Erreur inconnue');
+      }
+    } catch (err) {
+      btn.disabled = false;
+      btnText.textContent = '📨 Envoyer ma candidature';
+      spinner.style.display = 'none';
+      alert.className = 'alert error';
+      alert.textContent = '❌ ' + (err.message || 'Erreur de connexion. Réessaie.');
+      alert.style.display = 'block';
+    }
+  });
+</script>
+</body>
+</html>

@@ -122,6 +122,100 @@ function getDiscordUser(accessToken) {
   });
 }
 
+// ─── API Candidature ─────────────────────────────────────────────────────────
+const postesLabels = {
+  moderateur: '🛡️ Modérateur',
+  helper:     '🎮 Helper',
+  graphiste:  '🎨 Graphiste',
+  testeur:    '🧪 Testeur',
+};
+
+const postesColors = {
+  moderateur: 0x5865F2,
+  helper:     0x57F287,
+  graphiste:  0xEB459E,
+  testeur:    0xFEE75C,
+};
+
+app.post('/api/candidature', async (req, res) => {
+  const { poste, userId, username, age, anciennete, disponibilite, motivation, experience, specifique, sanctions, extra } = req.body;
+
+  if (!poste || !username || !motivation) {
+    return res.status(400).json({ success: false, message: 'Champs obligatoires manquants.' });
+  }
+
+  try {
+    const clientModule = require('../clientInstance');
+    const client = clientModule.getClient();
+
+    const channelId = process.env.CANDIDATURE_CHANNEL_ID;
+    if (!channelId) return res.status(500).json({ success: false, message: 'Salon de candidatures non configuré.' });
+
+    const channel = await client.channels.fetch(channelId);
+    if (!channel) return res.status(500).json({ success: false, message: 'Salon introuvable.' });
+
+    const ancienneteLabels = {
+      moins_1_semaine: 'Moins d\'une semaine',
+      '1_4_semaines': '1 à 4 semaines',
+      '1_3_mois': '1 à 3 mois',
+      plus_3_mois: 'Plus de 3 mois',
+      plus_6_mois: 'Plus de 6 mois',
+    };
+    const dispoLabels = {
+      '1_5h': '1 à 5h / semaine',
+      '5_10h': '5 à 10h / semaine',
+      '10_20h': '10 à 20h / semaine',
+      plus_20h: 'Plus de 20h / semaine',
+    };
+    const sanctionLabels = {
+      non: '✅ Aucune sanction',
+      oui_ancienne: '⚠️ Oui, ancienne',
+      oui_recente: '❌ Oui, récente',
+    };
+
+    const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+
+    const embed = new EmbedBuilder()
+      .setTitle(`📋 Nouvelle candidature — ${postesLabels[poste] || poste}`)
+      .setColor(postesColors[poste] || 0xEB459E)
+      .addFields(
+        { name: '👤 Candidat', value: userId ? `<@${userId}> (${username})` : username, inline: true },
+        { name: '🎂 Âge', value: age ? `${age} ans` : 'Non précisé', inline: true },
+        { name: '📅 Ancienneté', value: ancienneteLabels[anciennete] || anciennete || '—', inline: true },
+        { name: '⏱️ Disponibilité', value: dispoLabels[disponibilite] || disponibilite || '—', inline: true },
+        { name: '⚠️ Sanctions', value: sanctionLabels[sanctions] || sanctions || '—', inline: true },
+        { name: '\u200B', value: '\u200B', inline: true },
+        { name: '💬 Motivation', value: motivation.substring(0, 1024) },
+        { name: '🏆 Expérience', value: experience ? experience.substring(0, 1024) : '*Non renseigné*' },
+        { name: '❓ Question spécifique', value: specifique ? specifique.substring(0, 1024) : '*Non renseigné*' },
+      )
+      .setFooter({ text: `Gravity Voice • Candidature reçue` })
+      .setTimestamp();
+
+    if (extra && extra.trim()) {
+      embed.addFields({ name: '📝 Informations supplémentaires', value: extra.substring(0, 512) });
+    }
+
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId(`candidature_accept_${userId || 'unknown'}`)
+        .setLabel('✅ Accepter')
+        .setStyle(ButtonStyle.Success),
+      new ButtonBuilder()
+        .setCustomId(`candidature_refuse_${userId || 'unknown'}`)
+        .setLabel('❌ Refuser')
+        .setStyle(ButtonStyle.Danger),
+    );
+
+    await channel.send({ embeds: [embed], components: [row] });
+    return res.json({ success: true, message: 'Candidature envoyée !' });
+
+  } catch (err) {
+    console.error('Erreur candidature:', err);
+    return res.status(500).json({ success: false, message: 'Erreur interne. Contacte un admin.' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`🌐 Serveur de vérification démarré sur le port ${PORT}`);
 });
