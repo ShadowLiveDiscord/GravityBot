@@ -11,12 +11,12 @@ const {
 } = require('discord.js');
 
 const categoryLabels = {
-  bug_report:  { label: '🐛 Bug Report',  color: 0xED4245 },
-  suggestion:  { label: '💡 Suggestion',  color: 0xFEE75C },
-  sanction:    { label: '⚖️ Sanction',    color: 0xEB459E },
-  partenariat: { label: '🤝 Partenariat', color: 0x57F287 },
-  question:    { label: '❓ Question',    color: 0x5865F2 },
-  autre:       { label: '🛠️ Autre',      color: 0x99AAB5 },
+  bug_report:  { label: '🐛 Bug Report',  color: 0xED4245, envKey: 'TICKET_CAT_BUG' },
+  suggestion:  { label: '💡 Suggestion',  color: 0xFEE75C, envKey: 'TICKET_CAT_SUGGESTION' },
+  sanction:    { label: '⚖️ Sanction',    color: 0xEB459E, envKey: 'TICKET_CAT_SANCTION' },
+  partenariat: { label: '🤝 Partenariat', color: 0x57F287, envKey: 'TICKET_CAT_PARTENARIAT' },
+  question:    { label: '❓ Question',    color: 0x5865F2, envKey: 'TICKET_CAT_QUESTION' },
+  autre:       { label: '🛠️ Autre',      color: 0x99AAB5, envKey: 'TICKET_CAT_AUTRE' },
 };
 
 function getTicketButtons() {
@@ -47,19 +47,38 @@ async function createTicket(interaction, client) {
   const value  = interaction.values[0];
   const category = categoryLabels[value] || { label: '🛠️ Ticket', color: 0x5865F2 };
 
-  // Vérifier si déjà un ticket ouvert
+  // Vérifier si déjà un ticket ouvert (dans n'importe quelle catégorie ticket)
+  const ticketName = `ticket-${member.user.username.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+  const allTicketCatIds = [
+    process.env.TICKET_CATEGORY_ID,
+    process.env.TICKET_CAT_BUG,
+    process.env.TICKET_CAT_SUGGESTION,
+    process.env.TICKET_CAT_SANCTION,
+    process.env.TICKET_CAT_PARTENARIAT,
+    process.env.TICKET_CAT_QUESTION,
+    process.env.TICKET_CAT_AUTRE,
+  ].filter(Boolean);
+
   const existingChannel = guild.channels.cache.find(
-    c => c.name === `ticket-${member.user.username.toLowerCase().replace(/[^a-z0-9]/g, '')}` &&
-         c.parentId === process.env.TICKET_CATEGORY_ID
+    c => c.name === ticketName && allTicketCatIds.includes(c.parentId)
   );
   if (existingChannel) {
     return interaction.editReply({ content: `❌ Tu as déjà un ticket ouvert : ${existingChannel}` });
   }
 
+  // Choisir la catégorie selon le type de ticket
+  const specificCatId = category.envKey ? process.env[category.envKey] : null;
+  const isValidId = (id) => id && id !== '' && !id.startsWith('ID_CATEGORIE');
+  const parentId = isValidId(specificCatId)
+    ? specificCatId
+    : isValidId(process.env.TICKET_CATEGORY_ID)
+      ? process.env.TICKET_CATEGORY_ID
+      : null;
+
   const ticketChannel = await guild.channels.create({
     name: `ticket-${member.user.username.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
     type: ChannelType.GuildText,
-    parent: process.env.TICKET_CATEGORY_ID || null,
+    parent: parentId,
     permissionOverwrites: [
       { id: guild.id,   deny: [PermissionFlagsBits.ViewChannel] },
       {
